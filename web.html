@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            text-align: center;
+            background: url('background.jpeg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        #weather-info {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 350px;
+            text-align: center;
+        }
+        .weather-icon {
+            width: 150px;
+            height: 150px;
+            margin-bottom: 20px;
+        }
+        h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        p {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .weather-details {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .weather-details div {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .weather-details div img {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 5px;
+        }
+        form {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        input[type="text"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            margin-right: 10px;
+            width: 150px;
+        }
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            background-color: #4b6cb7;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .city-icon {
+            width: 30px;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div id="weather-info">
+        <form id="weather-form">
+            <input type="text" id="city" name="city" placeholder="Enter City Name">
+            <img src="city-icon.png" alt="City Icon" class="city-icon">
+            <button type="submit">Get Weather</button>
+        </form>
+        <div id="weather-details"></div>
+    </div>
+
+    <script>
+        document.getElementById("weather-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            var cityName = document.getElementById("city").value.trim();
+
+            if (cityName === "") {
+                alert("Please enter a city name.");
+                return;
+            }
+
+            fetchWeather(cityName);
+        });
+
+        function fetchWeather(cityName) {
+            var apiKey = 'da173b4d54309e634055b00da5e4af25';
+            var url = `https://api.openweathermap.org/data/2.5/weather?q=${cityName}&units=imperial&APPID=${apiKey}`;
+
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.cod === '404') {
+                        document.getElementById("weather-details").innerHTML = "<p>No City Found</p>";
+                    } else {
+                        displayWeather(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function displayWeather(data) {
+            var weatherCondition = data.weather[0].main.toLowerCase();
+            var weatherIcon;
+
+            if (weatherCondition === 'clear') {
+                weatherIcon = 'clear-icon.png'; // Custom clear icon
+            } else if (weatherCondition.includes('thunderstorm')) {
+                weatherIcon = 'thunderstorm.png'; // Custom thunderstorm icon
+            } else if (weatherCondition.includes('rain')) {
+                weatherIcon = 'rain.png'; // Custom rain icon
+            } else if (weatherCondition === 'clouds' && data.weather[0].description.toLowerCase().includes('few')) {
+                weatherIcon = 'cloudy.png'; // Custom cloudy icon
+            } else if (weatherCondition === 'clouds') {
+                weatherIcon = 'clouds.png'; // Custom clouds icon
+            } else {
+                weatherIcon = `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`; // Default icon from API
+            }
+
+            var weatherInfo = `
+                <h2>${data.name}</h2>
+                <img src="${weatherIcon}" alt="Weather Icon" class="weather-icon">
+                <p>${Math.round(data.main.temp)}°F</p>
+                <p>${data.weather[0].description}</p>
+                <div class="weather-details">
+                    <div>
+                        <img src="humidity-icon.png" alt="Humidity Icon">
+                        <p>${data.main.humidity}%</p>
+                    </div>
+                    <div>
+                        <img src="wind-icon.png" alt="Wind Icon">
+                        <p>${data.wind.speed} m/s</p>
+                    </div>
+                </div>
+                <p>Feels Like: ${Math.round(data.main.feels_like)}°F</p>
+                <p>Min Temp: ${Math.round(data.main.temp_min)}°F</p>
+                <p>Max Temp: ${Math.round(data.main.temp_max)}°F</p>
+                <p>Visibility: ${data.visibility} meters</p>
+                <p>Pressure: ${data.main.pressure} hPa</p>
+                <p>Sunrise: ${formatTime(data.sys.sunrise)}</p>
+                <p>Sunset: ${formatTime(data.sys.sunset)}</p>
+            `;
+            document.getElementById("weather-details").innerHTML = weatherInfo;
+        }
+
+        function formatTime(timestamp) {
+            var date = new Date(timestamp * 1000);
+            var hours = date.getHours();
+            var minutes = date.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12; // handle midnight
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
